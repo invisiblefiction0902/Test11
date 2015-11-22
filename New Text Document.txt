@@ -1,0 +1,112 @@
+using System.Collections;
+using System;
+
+public class Striker : MonoBehaviour 
+{
+	Vector2 _startPos,_endPos;
+	bool isHBallhited = false;
+	private GUILayer isClick;
+	Vector3 initialPosStriker, lastPos;
+
+	void Start () 
+	{
+		isHBallhited = false;
+		initialPosStriker = this.transform.position;
+		lastPos = this.transform.position;
+	}
+	
+	// Update is called once per frame
+	void Update () 
+	{
+		//Debug.Log(lastPos);
+		if(this.GetComponent<Rigidbody2D>().velocity.sqrMagnitude < 0.01f)
+		{
+			this.GetComponent<Rigidbody2D>().velocity = new Vector2(0f,0f);
+			this.transform.position = lastPos;
+		}
+		else
+			return;
+
+		if(Input.GetMouseButtonDown(0))
+		{
+			RaycastHit2D hit = Physics2D.Raycast( Camera.main.ScreenToWorldPoint(Input.mousePosition), -Vector2.up);
+
+			if(hit.transform.name == "stricker") 
+			{
+				_startPos = hit.transform.position;
+				isHBallhited = true;
+			}
+		}
+
+		if(isHBallhited)
+		{
+			Vector2 diff = Vector2.zero;
+            if(Input.GetButton("Fire1"))
+			{
+				_endPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+				diff = _startPos - _endPos;
+				if(Mathf.Abs(diff.x) > Mathf.Abs(diff.y))
+				{
+				
+					this.transform.position  = initialPosStriker - new Vector3(diff.x, 0,0);
+					if(this.transform.position.x < -2.0f) 
+						this.transform.position = new Vector3(-2.00f, this.transform.position.y, this.transform.position.z);
+					if(this.transform.position.x > 2.22f) 
+						this.transform.position = new Vector3( 2.22f, this.transform.position.y, this.transform.position.z);
+					lastPos = transform.position;
+
+				}
+			}
+			if(Input.GetMouseButtonUp(0))
+			{
+				initialPosStriker = lastPos;
+				_endPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);			
+				diff = _startPos - _endPos;
+				if(Mathf.Abs(diff.y) > 0.25f)
+				{
+					lastPos = transform.position;
+					isHBallhited = false;
+					CalculateVelocity();
+				}
+			}
+			//Debug.Log (diff.y);
+		}
+	}
+
+	void CalculateVelocity() 
+	{
+		GetComponent<Rigidbody2D>().AddForce((_startPos - _endPos).normalized * Vector2.Distance(_startPos, _endPos) * 2500);
+	}
+
+	void OnTriggerEnter2D(Collider2D other) 
+	{
+		//Debug.Log(other.tag);
+		switch(other.tag)
+		{
+		case "star":
+			Destroy(other.transform.gameObject);
+			break;
+		}
+	}
+
+	void OnCollisionEnter2D(Collision2D other) 
+	{
+		Piece piece;
+		//Debug.Log(other.transform.tag);
+		switch(other.transform.tag)
+		{
+		case "white":
+			piece = other.transform.GetComponent("Piece") as Piece;
+			piece.isUnderControl = false;
+			//Destroy(other.transform.gameObject);
+			break;
+		case "black":
+			piece = other.transform.GetComponent("Piece") as Piece;
+			piece.isUnderControl = false;
+			break;
+		case "hole":
+			Destroy(other.transform.gameObject);
+			break;
+		}
+	}
+}d60e3116-728d-4733-bb58-0690be6cc48c
